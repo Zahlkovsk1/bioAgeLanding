@@ -18,7 +18,9 @@ const App: React.FC = () => {
   );
 
   const [isFeaturesVisible, setIsFeaturesVisible] = useState(false);
-  const featureSectionRef = useRef<HTMLSelectElement>(null);
+  const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set());
+  const featureSectionRef = useRef<HTMLElement>(null);
+  const detailSectionRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     // Header scroll effect
@@ -47,11 +49,31 @@ const App: React.FC = () => {
       observer.observe(featureSectionRef.current);
     }
 
+    // Observer for detailed feature sections
+    const detailObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = parseInt(entry.target.getAttribute('data-index') || '0');
+            setVisibleSections(prev => new Set(prev).add(index));
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    detailSectionRefs.current.forEach((ref) => {
+      if (ref) detailObserver.observe(ref);
+    });
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       if (featureSectionRef.current) {
         observer.unobserve(featureSectionRef.current);
       }
+      detailSectionRefs.current.forEach((ref) => {
+        if (ref) detailObserver.unobserve(ref);
+      });
     };
   }, []);
 
@@ -67,7 +89,7 @@ const App: React.FC = () => {
           --color-border: #d2d2d7;
           --color-black: #121212;
           --color-white: #ffffff;
-          --color-footer-bg: #121215; /* Darker footer background */
+          --color-footer-bg: #121215;
           --color-footer-text: #9ca3af;
           --color-accent-blue: #007aff; 
           --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
@@ -214,14 +236,96 @@ const App: React.FC = () => {
         }
         .feature p { color: var(--color-text-secondary); font-size: 1rem; }
 
+        /* 9. NEW: Detailed Feature Sections with Alternating Layout */
+        .detailed-features-wrapper {
+          background: linear-gradient(to bottom, 
+            var(--color-bg) 0%,         
+            rgba(0, 0, 0, 0.02) 50%,
+            var(--color-bg) 100%        
+          );
+          padding: 80px 0;
+        }
+        .detailed-feature-section {
+          padding: 80px 0;
+          opacity: 0;
+          transform: translateY(40px);
+          transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .detailed-feature-section.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .detailed-feature-layout {
+          display: flex;
+          align-items: center;
+          gap: 60px;
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 0 24px;
+        }
+        .detailed-feature-layout.reverse {
+          flex-direction: row-reverse;
+        }
+        .detailed-feature-content {
+          flex: 1;
+          max-width: 500px;
+        }
+        .detailed-feature-content h2 {
+          font-family: var(--font-rounded);
+          font-size: 2.75rem;
+          font-weight: 700;
+          line-height: 1.2;
+          margin-bottom: 20px;
+          letter-spacing: -0.01em;
+          margin-top: 0; 
+        }
+        .detailed-feature-content p {
+          font-size: 1.125rem;
+          line-height: 1.7;
+          color: var(--color-text-secondary);
+          margin-bottom: 16px;
+        }
+        .detailed-feature-list {
+          list-style: none;
+          margin-top: 24px;
+        }
+        .detailed-feature-list li {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 16px;
+          font-size: 1rem;
+          line-height: 1.6;
+          color: var(--color-text-secondary);
+        }
+        .detailed-feature-list li svg {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
+          margin-top: 2px;
+          stroke: var(--color-text-primary);
+        }
+        .detailed-feature-mockup {
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          opacity: 0;
+          transform: scale(0.95);
+          transition: opacity 0.8s ease-out 0.3s, transform 0.8s ease-out 0.3s;
+        }
+        .detailed-feature-section.visible .detailed-feature-mockup {
+          opacity: 1;
+          transform: scale(1);
+        }
 
-        /* 9. NEW Feature Cards Section (2-Column Animated)*/
+        /* 10. Feature Cards Section (2-Column Animated)*/
         .feature-cards-section {
           padding: 120px 0;
           background: linear-gradient(to bottom, 
             var(--color-bg) 0%,         
-            rgba(0, 0, 0, 0.04) 20%,     /* 4% opacity black/dark gray */
-            rgba(0, 0, 0, 0.04) 80%,     /* 4% opacity black/dark gray */
+            rgba(0, 0, 0, 0.04) 20%,
+            rgba(0, 0, 0, 0.04) 80%,
             var(--color-bg) 100%        
           );
           overflow: hidden;
@@ -293,7 +397,7 @@ const App: React.FC = () => {
           color: var(--color-text-secondary);
         }
 
-        /* 10. Dark CTA Band */
+        /* 11. Dark CTA Band */
         .dark-cta-band-outer { padding: 24px 0; }
         .dark-cta-band {
           background-color: var(--color-black); color: var(--color-white);
@@ -321,10 +425,10 @@ const App: React.FC = () => {
           font-size: 0.8125rem; color: #6e6e73; margin-top: 10px;
         }
 
-        /* 11. Footer */
+        /* 12. Footer */
         .site-footer {
           color: var(--color-footer-text);
-          background-color: var(--color-footer-bg); /* Solid dark background */
+          background-color: var(--color-footer-bg);
           padding: 100px 0 30px 0; 
         }
         .footer-main {
@@ -377,8 +481,7 @@ const App: React.FC = () => {
         }
         .footer-legal a:hover { color: var(--color-white); }
 
-
-        /* 12. === Animation Keyframes === */
+        /* 13. Animation Keyframes */
         @keyframes fadeInLeft {
           from { opacity: 0; transform: translateX(-30px); }
           to { opacity: 1; transform: translateX(0); }
@@ -387,20 +490,17 @@ const App: React.FC = () => {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        /* Animation Utility Classes */
         .phone-mockup-features.animate-fade-in-left {
           animation: fadeInLeft 0.8s ease-out forwards;
         }
         .feature-card.animate-fade-in-up {
           animation: fadeInUp 0.6s ease-out forwards;
         }
-        /* Hide phone mockup by default for animation */
         .phone-mockup-features {
           opacity: 0;
         }
 
-
-        /* 13. Responsive */
+        /* 14. Responsive */
         @media (max-width: 768px) {
           .hero { padding: 60px 0; }
           .hero-with-phone { flex-direction: column; gap: 40px; }
@@ -412,6 +512,30 @@ const App: React.FC = () => {
           .hero h1 { font-size: 2.5rem; }
           .hero p { font-size: 1.125rem; }
           .features { grid-template-columns: 1fr; gap: 40px; }
+          
+          /* Detailed features responsive */
+          .detailed-feature-layout,
+          .detailed-feature-layout.reverse {
+            flex-direction: column;
+            gap: 40px;
+          }
+          .detailed-feature-content {
+            max-width: 100%;
+            text-align: center;
+          }
+          .detailed-feature-content h2 {
+            font-size: 2rem;
+          }
+          .detailed-feature-mockup {
+            max-width: 280px;
+          }
+          .detailed-features-wrapper {
+            padding: 40px 0;
+          }
+          .detailed-feature-section {
+            padding: 40px 0;
+          }
+          
           .dark-cta-band { padding: 36px 22px; border-radius: 0; margin: 0; }
           .dark-cta-band-outer { padding: 12px 0; }
           .dark-cta-band h2 { font-size: 2.25rem; max-width: 22ch; }
@@ -420,17 +544,16 @@ const App: React.FC = () => {
           .cta-actions a { width: 100%; max-width: 320px; }
           .cta-disclaimer { font-size: 0.8125rem; color: #6e6e73; margin-top: 10px; }
 
-          /* Responsive for new 2-col features */
           .features-two-col-layout {
-            grid-template-columns: 1fr; /* Stack columns on mobile */
+            grid-template-columns: 1fr;
           }
           .phone-mockup-features {
             max-width: 280px;
-            margin: 0 auto 40px auto; /* Center mockup */
+            margin: 0 auto 40px auto;
           }
           .features-content-stack .feature-cards-title,
           .features-content-stack .feature-cards-subtitle {
-            text-align: center; /* Center text on mobile */
+            text-align: center;
           }
           .feature-card {
             flex-direction: column;
@@ -492,176 +615,206 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* === SIMPLE FEATURES SECTION === */}
-        <section id="learn" className="features container">
-          <div className="feature">
-            <h3>Monochrome focus</h3>
-            <p>Black and white UI that puts outcomes first.</p>
-          </div>
-          <div className="feature">
-            <h3>Signal over noise</h3>
-            <p>Only the metrics that matter to your decisions.</p>
-          </div>
-          <div className="feature">
-            <h3>Built for clarity</h3>
-            <p>Accessible type, generous spacing, no distractions.</p>
-          </div>
-        </section>
-
-        {/* === NEW ANIMATED FEATURES SECTION === */}
-        <section ref={featureSectionRef} className="feature-cards-section">
-          <div className="container">
-            <div className="features-two-col-layout">
-              {/* Left Column: New Mockup */}
-              <div className={`phone-mockup phone-mockup-features ${isFeaturesVisible ? 'animate-fade-in-left' : ''}`}>
+        {/* DETAILED FEATURE SECTIONS */}
+        <div className="detailed-features-wrapper">
+          {/* Feature 1: Goal-driven tracking */}
+          <section
+            ref={(el) => { detailSectionRefs.current[0] = el; }}
+            data-index="0"
+            className={`detailed-feature-section ${visibleSections.has(0) ? 'visible' : ''}`}
+          >
+            <div className="detailed-feature-layout">
+              <div className="detailed-feature-mockup">
                 <div className="iphone-frame">
                   <div className="iphone-screen">
                     <div className="dynamic-island"></div>
                     <img
-                      alt="BioAge App Features"
-                      src="https://images.unsplash.com/photo-1580600309338-7516e0b3c2f5?w=300&h=600&fit=crop"
-                      onError={(e) => (e.currentTarget.src = 'https://placehold.co/280x580/f5f5f7/6e6e73?text=App+Feature')}
+                      alt="Goal tracking in BioAge"
+                      src="https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=300&h=600&fit=crop"
+                      onError={(e) => (e.currentTarget.src = 'https://placehold.co/280x580/f5f5f7/6e6e73?text=Goals')}
                     />
                   </div>
                 </div>
               </div>
+              <div className="detailed-feature-content">
+                <h2>Goal-Driven Tracking</h2>
+                <p>Set personalized nutrition and calorie targets that align with your health journey. Track your progress effortlessly as you work towards your goals.</p>
+                <ul className="detailed-feature-list">
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Customize daily calorie and macro targets
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Track activity and calories burned
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Visual progress indicators and insights
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
 
-              {/* Right Column: Content & Card Stack */}
-              <div className="features-content-stack">
-                <h2 className="feature-cards-title">Everything You Need In One App</h2>
-                <p className="feature-cards-subtitle">Powerful features designed to help you achieve your health and fitness goals with precision.</p>
-
-                <div className="feature-cards-stack">
-                  {/* Card 1 */}
-                  <div className={`feature-card ${isFeaturesVisible ? 'animate-fade-in-up' : ''}`} style={{ animationDelay: '0.2s' }}>
-                    <div className="feature-card-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                      </svg>
-                    </div>
-                    <div className="feature-card-content">
-                      <h3>AI Nutrition Analysis</h3>
-                      <p>Snap a photo and let our AI instantly analyze calories, macros, and nutrients with incredible accuracy.</p>
-                    </div>
-                  </div>
-
-                  {/* Card 2 */}
-                  <div className={`feature-card ${isFeaturesVisible ? 'animate-fade-in-up' : ''}`} style={{ animationDelay: '0.4s' }}>
-                    <div className="feature-card-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-                        <path d="M7 2v20" />
-                        <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-                      </svg>
-                    </div>
-                    <div className="feature-card-content">
-                      <h3>Smart Meal Logging</h3>
-                      <p>Log meals effortlessly. Track everything you eat with detailed nutritional breakdowns and daily insights.</p>
-                    </div>
-                  </div>
-
-                  {/* Card 3 */}
-                  <div className={`feature-card ${isFeaturesVisible ? 'animate-fade-in-up' : ''}`} style={{ animationDelay: '0.6s' }}>
-                    <div className="feature-card-icon">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                      </svg>
-                    </div>
-                    <div className="feature-card-content">
-                      <h3>Activity Tracking</h3>
-                      <p>Monitor your daily activities, workouts, and calories burned to get a complete picture of your health.</p>
-                    </div>
+          {/* Feature 2: Signal over noise */}
+          <section
+            ref={(el) => { detailSectionRefs.current[1] = el; }}
+            data-index="1"
+            className={`detailed-feature-section ${visibleSections.has(1) ? 'visible' : ''}`}
+          >
+            <div className="detailed-feature-layout reverse">
+              <div className="detailed-feature-mockup">
+                <div className="iphone-frame">
+                  <div className="iphone-screen">
+                    <div className="dynamic-island"></div>
+                    <img
+                      alt="Clean interface in BioAge"
+                      src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=600&fit=crop"
+                      onError={(e) => (e.currentTarget.src = 'https://placehold.co/280x580/f5f5f7/6e6e73?text=Clarity')}
+                    />
                   </div>
                 </div>
               </div>
+              <div className="detailed-feature-content">
+                <h2>Signal Over Noise</h2>
+                <p>Focus on what truly matters. Our minimalist design surfaces only the metrics that drive meaningful decisions about your health.</p>
+                <ul className="detailed-feature-list">
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Clean, distraction-free interface
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Essential metrics at a glance
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Actionable insights, not clutter
+                  </li>
+                </ul>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/*DARK CTA SECTION*/}
+          {/* Feature 3: AI-powered nutrition */}
+          <section
+            ref={(el) => { detailSectionRefs.current[2] = el; }}
+            data-index="2"
+            className={`detailed-feature-section ${visibleSections.has(2) ? 'visible' : ''}`}
+          >
+            <div className="detailed-feature-layout">
+              <div className="detailed-feature-mockup">
+                <div className="iphone-frame">
+                  <div className="iphone-screen">
+                    <div className="dynamic-island"></div>
+                    <img
+                      alt="AI nutrition analysis in BioAge"
+                      src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=600&fit=crop"
+                      onError={(e) => (e.currentTarget.src = 'https://placehold.co/280x580/f5f5f7/6e6e73?text=AI+Nutrition')}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="detailed-feature-content">
+                <h2>AI-Powered Nutrition</h2>
+                <p>Let artificial intelligence handle the complexity of nutrition calculations. Simply snap a photo, and our AI does the rest.</p>
+                <ul className="detailed-feature-list">
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Instant meal analysis from photos
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Accurate calorie and macro breakdowns
+                  </li>
+                  <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Smart recommendations based on your goals
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+        {/* === CTA SECTION (Dark Band) === */}
         <section id="download" className="dark-cta-band-outer">
-          <div className="dark-cta-band container">
+          <div className="dark-cta-band">
             <div className="hero-label">
               {SparkleIcon}
-              Start Your Health Journey Today
+              Start Your Journey
             </div>
-            <h2>Ready to Transform Your Life?</h2>
-            <p>Join thousands of users who are already achieving their health goals with BioAge. Download now and start tracking your nutrition with AI!</p>
+            <h2>Ready to take control of your health?</h2>
+            <p>Download BioAge today and experience the easiest way to track your nutrition and reach your fitness goals.</p>
             <div className="cta-actions">
-              <a className="btn btn-light" href="#">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
+              <a className="btn btn-light btn-hero-download" href="#">
+                {DownloadIcon}
                 Download for iOS
               </a>
-              <a className="btn btn-dark" href="#">
-                Get Started
-              </a>
             </div>
-            <p className="cta-disclaimer">Free 5-day trial • Cancel anytime</p>
+            <p className="cta-disclaimer">Free trial available</p>
           </div>
         </section>
-      </main>
+      </main> {/* <--- THIS CLOSING TAG WAS MISSING AND CAUSED ALL THE ERRORS */}
 
-      {/* === FOOTER === */}
       <footer className="site-footer">
         <div className="container">
           <div className="footer-main">
             <div className="footer-brand">
               <div className="brand">
-                <div className="brand-icon">🍎</div>
+                <div className="brand-icon"></div>
                 BioAge
               </div>
-              <p className="footer-brand-desc">
-                AI-powered nutrition tracking and activity logging for a healthier you.
-              </p>
+              <p className="footer-brand-desc">Simplifying health tracking with advanced AI and a beautiful, minimalist design. Achieve your goals, effortlessly.</p>
               <div className="footer-social">
-                <a href="#" className="social-icon" aria-label="Twitter">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />
-                  </svg>
+                <a className="social-icon" href="#" aria-label="Twitter">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2 1.5-1.4 2.3-3.3 2-5.1-.3-1.8-.8-3.6-1.7-5.3C5.5 5.5 9 3 13 3c2.7 0 4.9 1 6.8 2.8.2.3.4.7.6 1.1"></path></svg>
                 </a>
-                <a href="#" className="social-icon" aria-label="GitHub">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
-                  </svg>
+                <a className="social-icon" href="#" aria-label="Instagram">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" x2="17.5" y1="6.5" y2="6.5"></line></svg>
                 </a>
-                <a href="#" className="social-icon" aria-label="LinkedIn">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
-                    <circle cx="4" cy="4" r="2" />
-                  </svg>
+                <a className="social-icon" href="#" aria-label="LinkedIn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect width="4" height="12" x="2" y="9"></rect><circle cx="4" cy="4" r="2"></circle></svg>
                 </a>
               </div>
             </div>
             <div className="footer-contact-section">
-              <h3>Contact</h3>
+              <h3>Contact Us</h3>
               <div className="footer-contact">
                 <div className="contact-item">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                  <a href="mailto:support@bioage.com">support@bioage.com</a>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2 2h-12a2 2 0 0 1-2-2v-3l4-4 4 4 4-4z"></path></svg>
+                  <a href="mailto:support@bioage.app">support@bioage.app</a>
                 </div>
                 <div className="contact-item">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  <span>123 Health Street<br />San Francisco, CA 94102</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6"></path></svg>
+                  <span>Corso Mateotti Giacomo, Lecco 23900</span>
                 </div>
               </div>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>© 2025 BioAge. All rights reserved.</p>
+            <span>&copy; {new Date().getFullYear()} BioAge. All rights reserved.</span>
             <div className="footer-legal">
               <a href="#">Privacy Policy</a>
               <a href="#">Terms of Service</a>
-              <a href="#">Cookie Policy</a>
             </div>
           </div>
         </div>
