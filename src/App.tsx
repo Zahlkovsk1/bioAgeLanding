@@ -621,7 +621,7 @@ const App: React.FC = () => {
                   <div className="dynamic-island"></div>
                   <img
                     alt="BioAge App Screenshot of the main dashboard"
-                    src="https://i.postimg.cc/Ls2jvZH0/Screenshot-2025-10-30-at-21-29-30.jpg"
+                    src="https://i.postimg.cc/NFtffD9s/bio-Age-View-1.jpg"
                   />
                 </div>
               </div>
