@@ -17,7 +17,7 @@ const App: React.FC = () => {
     </svg>
   );
 
-  const [isFeaturesVisible, setIsFeaturesVisible] = useState(false);
+
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set());
   const featureSectionRef = useRef<HTMLElement>(null);
   const detailSectionRefs = useRef<(HTMLElement | null)[]>([]);
@@ -38,7 +38,6 @@ const App: React.FC = () => {
       (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting) {
-          setIsFeaturesVisible(true);
           observer.unobserve(entry.target);
         }
       },
