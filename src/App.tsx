@@ -20,6 +20,7 @@ const App: React.FC = () => {
 
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set());
   const featureSectionRef = useRef<HTMLElement>(null);
+  // Important: Use a specific length for detailSectionRefs to match the number of sections (3)
   const detailSectionRefs = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
@@ -34,11 +35,13 @@ const App: React.FC = () => {
     };
     window.addEventListener('scroll', handleScroll);
 
+    // Initial observer for a single feature section (though not used in the JSX provided)
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting) {
           observer.unobserve(entry.target);
+          // Add logic for initial feature section animation here if needed
         }
       },
       { threshold: 0.3 }
@@ -48,19 +51,29 @@ const App: React.FC = () => {
       observer.observe(featureSectionRef.current);
     }
 
-    // Observer for detailed feature sections
+    // Observer for detailed feature sections (0, 1, 2)
     const detailObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            // Parses the data-index attribute to get the section number
             const index = parseInt(entry.target.getAttribute('data-index') || '0');
             setVisibleSections(prev => new Set(prev).add(index));
+          } else {
+            // Optional: Remove 'visible' on exit if you want re-triggering animation on scroll-back-up
+            // const index = parseInt(entry.target.getAttribute('data-index') || '0');
+            // setVisibleSections(prev => {
+            //   const newSet = new Set(prev);
+            //   newSet.delete(index);
+            //   return newSet;
+            // });
           }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.2 } // Triggers when 20% of the element is visible
     );
 
+    // Observe the 3 detailed feature sections
     detailSectionRefs.current.forEach((ref) => {
       if (ref) detailObserver.observe(ref);
     });
@@ -137,7 +150,9 @@ const App: React.FC = () => {
           width: 32px; height: 32px; background-color: var(--color-text-primary);
           border-radius: 8px; display: flex; align-items: center; justify-content: center;
           color: var(--color-white); font-size: 1.25rem; font-weight: bold;
+          line-height: 1; /* Improvement for vertical alignment */
         }
+        .brand-icon::before { content: 'B'; } /* Simple icon alternative */
 
         /* 5. Buttons */
         .btn {
@@ -498,7 +513,7 @@ const App: React.FC = () => {
         .phone-mockup-features {
           opacity: 0;
         }
-
+        
         /* 14. Responsive */
         @media (max-width: 768px) {
           .hero { padding: 60px 0; }
@@ -570,7 +585,7 @@ const App: React.FC = () => {
         <div className="nav-container">
           <nav className="nav" aria-label="Main Navigation">
             <div className="brand">
-              <div className="brand-icon"></div>
+              <div className="brand-icon" aria-hidden="true"></div> {/* Added aria-hidden */}
               BioAge
             </div>
             <a className="btn btn-dark" href="#download">Download Now</a>
@@ -594,7 +609,7 @@ const App: React.FC = () => {
               </h1>
               <p>Log meals, track calories, analyze nutrition with AI, and monitor your activities. Everything you need to achieve your health goals in one beautiful app.</p>
               <div className="hero-actions">
-                <a className="btn btn-dark btn-hero-download" href="#download">
+                <a className="btn btn-dark btn-hero-download" href="#download" role="button">
                   {DownloadIcon}
                   Download for iOS
                 </a>
@@ -605,7 +620,7 @@ const App: React.FC = () => {
                 <div className="iphone-screen">
                   <div className="dynamic-island"></div>
                   <img
-                    alt="BioAge App Screenshot"
+                    alt="BioAge App Screenshot of the main dashboard"
                     src="https://i.postimg.cc/Ls2jvZH0/Screenshot-2025-10-30-at-21-29-30.jpg"
                   />
                 </div>
@@ -613,6 +628,9 @@ const App: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* Simple Features Section (Placeholder in CSS, not used in JSX) - Can be removed if not needed */}
+        {/* You had CSS for .features, .feature, but no JSX for it. */}
 
         {/* DETAILED FEATURE SECTIONS */}
         <div className="detailed-features-wrapper">
@@ -628,8 +646,8 @@ const App: React.FC = () => {
                   <div className="iphone-screen">
                     <div className="dynamic-island"></div>
                     <img
-                      alt="Goal tracking in BioAge"
-                      src="https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=300&h=600&fit=crop"
+                      alt="Goal tracking screen in BioAge"
+                      src="https://i.postimg.cc/ncTNC2jR/goals-White-1.png"
                       onError={(e) => (e.currentTarget.src = 'https://placehold.co/280x580/f5f5f7/6e6e73?text=Goals')}
                     />
                   </div>
@@ -674,8 +692,8 @@ const App: React.FC = () => {
                   <div className="iphone-screen">
                     <div className="dynamic-island"></div>
                     <img
-                      alt="Clean interface in BioAge"
-                      src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=600&fit=crop"
+                      alt="Clean, minimalist interface of BioAge"
+                      src="https://i.postimg.cc/HsSPpLFx/sum-View-White-1.png"
                       onError={(e) => (e.currentTarget.src = 'https://placehold.co/280x580/f5f5f7/6e6e73?text=Clarity')}
                     />
                   </div>
@@ -720,7 +738,7 @@ const App: React.FC = () => {
                   <div className="iphone-screen">
                     <div className="dynamic-island"></div>
                     <img
-                      alt="AI nutrition analysis in BioAge"
+                      alt="AI nutrition analysis feature in BioAge"
                       src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=600&fit=crop"
                       onError={(e) => (e.currentTarget.src = 'https://placehold.co/280x580/f5f5f7/6e6e73?text=AI+Nutrition')}
                     />
@@ -754,6 +772,7 @@ const App: React.FC = () => {
             </div>
           </section>
         </div>
+
         {/* === CTA SECTION (Dark Band) === */}
         <section id="download" className="dark-cta-band-outer">
           <div className="dark-cta-band">
@@ -762,9 +781,9 @@ const App: React.FC = () => {
               Start Your Journey
             </div>
             <h2>Ready to take control of your health?</h2>
-            <p>Download BioAge today and experience the easiest way to track your nutrition and reach your fitness goals.</p>
+            <p>Download **BioAge** today and experience the easiest way to track your nutrition and reach your fitness goals.</p>
             <div className="cta-actions">
-              <a className="btn btn-light btn-hero-download" href="#">
+              <a className="btn btn-light btn-hero-download" href="#download-link-store" role="button"> {/* Changed href */}
                 {DownloadIcon}
                 Download for iOS
               </a>
@@ -772,14 +791,14 @@ const App: React.FC = () => {
             <p className="cta-disclaimer">Free trial available</p>
           </div>
         </section>
-      </main> {/* <--- THIS CLOSING TAG WAS MISSING AND CAUSED ALL THE ERRORS */}
+      </main> {/* <-- The crucial missing closing tag is now here */}
 
       <footer className="site-footer">
         <div className="container">
           <div className="footer-main">
             <div className="footer-brand">
               <div className="brand">
-                <div className="brand-icon"></div>
+                <div className="brand-icon" aria-hidden="true"></div>
                 BioAge
               </div>
               <p className="footer-brand-desc">Simplifying health tracking with advanced AI and a beautiful, minimalist design. Achieve your goals, effortlessly.</p>
@@ -810,7 +829,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="footer-bottom">
-            <span>&copy; {new Date().getFullYear()} BioAge. All rights reserved.</span>
+            <span>&copy; {new Date().getFullYear()} **BioAge**. All rights reserved.</span>
             <div className="footer-legal">
               <a href="#">Privacy Policy</a>
               <a href="#">Terms of Service</a>
